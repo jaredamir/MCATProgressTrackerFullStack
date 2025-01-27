@@ -1,0 +1,5 @@
+#backend
+.idea
+src/__pycache__
+airtable_data.csv
+src/.env
