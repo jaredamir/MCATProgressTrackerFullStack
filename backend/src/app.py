@@ -3,7 +3,7 @@ from flask_cors import CORS, cross_origin  # Import CORS
 from main import get_needs_review_ratios, get_reason_for_missing_frequencies
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "*"}})
+CORS(app, origins="http://localhost:3000")
 
 @app.route('/')
 def home():
@@ -14,7 +14,8 @@ def needs_review_ratios():
     data = get_needs_review_ratios()
     return jsonify(data)
 
-@app.route('/api/reason-for-missing-frequencies')
+@app.route('/api/reason-for-missing-frequencies', methods=['GET'])
+@cross_origin(supports_credentials=True)
 def reason_for_missing_frequencies():
     data = get_reason_for_missing_frequencies()
     return jsonify(data)

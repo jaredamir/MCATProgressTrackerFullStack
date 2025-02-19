@@ -28,6 +28,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable}`}
         style={{padding: "20px"}}
       >
+        <h1 style={{marginBottom: "30px"}}>MCAT Analytics</h1>
         {children}
       </body>
     </html>

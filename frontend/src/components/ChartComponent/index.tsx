@@ -1,9 +1,29 @@
 // components/BarChart.js
 import React, { useEffect, useState } from 'react';
-import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Bar, Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement
+} from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement
+);
+
 const colorPalette = [
   { background: 'rgba(75, 192, 192, 0.2)', border: 'rgba(75, 192, 192, 1)' },
   { background: 'rgba(255, 99, 132, 0.2)', border: 'rgba(255, 99, 132, 1)' },
@@ -21,9 +41,15 @@ function getRandomColor() {
   return colorPalette[randomIndex];
 }
 
-const BarChart = ({ chartName, data, analytic }) => {
-  const labels = Object.keys(data)
-  const { background, border } = getRandomColor();const color = getRandomColor()
+interface ChartComponentProps {
+  chartName: string, 
+  data: any,
+  analytic: string,
+  graphType: "Bar"| "Line"
+}
+
+const ChartComponent = ({ chartName, data, analytic, graphType }: ChartComponentProps) => {
+  const { background, border } = getRandomColor();
   const chartData = {
     labels: Object.keys(data),
     datasets: [
@@ -36,9 +62,14 @@ const BarChart = ({ chartName, data, analytic }) => {
       },
     ],
   };
-
-  return <Bar data={chartData} />;
+  switch(graphType.toLowerCase()){
+    case "bar":
+      return <Bar data={chartData} />;
+    case "line":
+      return <Line data={chartData} />
+  }
+  return undefined
   
 };
 
-export default BarChart;
+export default ChartComponent;
