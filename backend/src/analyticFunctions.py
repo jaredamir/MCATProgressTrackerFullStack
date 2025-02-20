@@ -24,7 +24,7 @@ BASE_ID = os.getenv("AIRTABLE_BASE_ID")
 
 tableNames = {
     "topics": "Topics Review",
-    "practice tests": "Practice Test Scores",
+    "scores": "Practice Test Scores",
     "question reviews": "Practice Test Review"
 }
 
@@ -45,7 +45,7 @@ def get_topics_map():
 
 def get_tests_map():
     try:
-        airtableData = get_airtable_table_data(tableNames["practice tests"])
+        airtableData = get_airtable_table_data(tableNames["scores"])
         #print(airtableData)
         testMap = {
             test['id']: test['fields']['Date']
@@ -56,11 +56,39 @@ def get_tests_map():
     except Exception as e:
         logger.error("error in get_tests_map:", e)
 
-def get_reason_for_missing_frequencies():
+def get_topics_related_to_missed_questions():
     try:
         airtableData = get_airtable_table_data(tableNames["question reviews"])
         testMap = get_tests_map()
-        print(airtableData)
+        topicsMap = get_topics_map()
+        testsDataMap = {}
+        for review in airtableData:
+            review_test_date = testMap[review['fields']['Test'][0]]
+            if not review_test_date in testsDataMap:
+                testsDataMap[review_test_date] = {}
+
+            topics = review['fields'].get('Topic question relates to ', None)
+            if topics == None:
+                continue
+            for topic in topics:
+                topicName = topicsMap[topic]
+                if topicName == None:
+                    pass
+                if topicName in testsDataMap[review_test_date]:
+                    testsDataMap[review_test_date][topicName] += 1
+                else:
+                    testsDataMap[review_test_date][topicName] = 1
+
+        return testsDataMap
+
+    except Exception as e:
+        logger.error("error in get_topic_related_to_miss:", e)
+        return None
+
+def get_reason_for_missing_frequencies(): #make the airtable get function global, so we're not calling the api everytime
+    try:
+        airtableData = get_airtable_table_data(tableNames["question reviews"])
+        testMap = get_tests_map()
         testsDataMap = {}
         for review in airtableData:
             review_test_id = testMap[review['fields']['Test'][0]]
@@ -76,6 +104,31 @@ def get_reason_for_missing_frequencies():
     except Exception as e:
         logger.error("error occured with get_reason_for_missing_frequencies:", e)
         return None
+
+def get_test_section_scores():
+    try:
+        airtableData = get_airtable_table_data(tableNames["scores"])
+        testMap = get_tests_map()
+        testsDataMap = {}
+        sections = ['Chem/Phys Score', 'CARS score', 'Bio/Bio chem Score', 'Psych/Soc Score']
+        for test in airtableData:
+            testId = test['id']
+            if not testId in testMap:
+                continue
+            testDate = testMap[testId]
+            if not testId or not testDate:
+                continue
+            scoreData = {section: test['fields'][section]
+                         for section in sections
+                         if test['fields'].get(section)
+                         }
+            testsDataMap[testDate] = scoreData
+
+        return testsDataMap
+
+    except Exception as e:
+        logger.error("error occured with get_reason_for_missing_frequencies:", e)
+        return None
 if __name__ == "__main__":
-    print(get_reason_for_missing_frequencies()) #rec2oz7d5mlc8BewW
+    print(get_test_section_scores()) #rec2oz7d5mlc8BewW
     #print(get_tests_map())
