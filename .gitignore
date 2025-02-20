@@ -1,2 +1,3 @@
 #Global gitignore
 .DS_Store
+backend/src/app.log
