@@ -28,6 +28,11 @@ tableNames = {
     "question reviews": "Practice Test Review"
 }
 
+#Analytics to add:
+#-Reason for missing frequency Per section
+#-CARS question type frqucny for missing
+#-Average reason for missing across tests (to see if theres a consistent issue) or comparing frequncy of missing to previous test
+
 def get_airtable_table_data(tableName):
     airTable = Airtable(BASE_ID, tableName, API_KEY)
     data = airTable.get_all()
@@ -36,7 +41,6 @@ def get_airtable_table_data(tableName):
 def get_topics_map():
     try:
         airtableData = get_airtable_table_data(tableNames["topics"])
-        print(airtableData)
         topicMap = {topic['id']: f"{topic['fields']['Topic Name']} ({topic['fields']['Section'][0]})" for topic in airtableData}
 
         return topicMap
@@ -46,7 +50,6 @@ def get_topics_map():
 def get_tests_map():
     try:
         airtableData = get_airtable_table_data(tableNames["scores"])
-        #print(airtableData)
         testMap = {
             test['id']: test['fields']['Date']
             for test in airtableData
@@ -129,6 +132,39 @@ def get_test_section_scores():
     except Exception as e:
         logger.error("error occured with get_reason_for_missing_frequencies:", e)
         return None
+
+def get_topics_lacking_in_understanding_frequncies():
+    try:
+        airtableData = get_airtable_table_data(tableNames["question reviews"])
+        print(airtableData)
+        testMap = get_tests_map()
+        topicsMap = get_topics_map()
+        testsDataMap = {}
+        for review in airtableData:
+            if all(reason not in review.get('fields').get('Reason For Missing') for reason in
+                   ("lacking topic understanding", "Content issue (Memorization)")):
+                continue
+            review_test_date = testMap[review['fields']['Test'][0]]
+            if not review_test_date in testsDataMap:
+                testsDataMap[review_test_date] = {}
+
+            topics = review['fields'].get('Topic question relates to ', None)
+            if topics == None:
+                continue
+            for topic in topics:
+                topicName = topicsMap[topic]
+                if topicName == None:
+                    pass
+                if topicName in testsDataMap[review_test_date]:
+                    testsDataMap[review_test_date][topicName] += 1
+                else:
+                    testsDataMap[review_test_date][topicName] = 1
+
+        return testsDataMap
+
+    except Exception as e:
+        logger.error("error in get_topics_lacking_in_understanding_frequncies:", e)
+        return None
+
 if __name__ == "__main__":
-    print(get_test_section_scores()) #rec2oz7d5mlc8BewW
-    #print(get_tests_map())
+    print(get_topics_lacking_in_understanding_frequncies()) #rec2oz7d5mlc8BewW
