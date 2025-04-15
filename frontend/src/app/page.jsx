@@ -185,7 +185,7 @@ export default function Home() {
     setIsLoading(true);
     setIsError(false)
     try {
-      const res = await axios.get("http://localhost:5000/api/get_all_analytics", {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/get_all_analytics`, {
         headers: {
           "Content-Type": "application/json"
         },
