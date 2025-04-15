@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
+import { useState } from 'react';
 import {
   Chart as ChartJS,
   Title,
@@ -58,9 +59,10 @@ function getRandomColor() {
   return selectedColor;
 }
 
+const graphTypes = ["bar", "line", "pie"];
 
 const ChartComponent = ({data}) => {
-  const graphType = data.graphType;
+  const [graphType, setGraphType] = useState(data.graphType.toLowerCase() || 'bar');
   const labels = Object.keys(data.data[Object.keys(data.data)[0]])
   const datasets = Object.keys(data.data).map((test) => {
     const { background, border } = getRandomColor();
@@ -96,22 +98,25 @@ const ChartComponent = ({data}) => {
     },
   };
 
-  switch(graphType.toLowerCase()){
-    case "bar":
-      return <Bar data={chartData} options={options} />;
-    case "line":
-      return <Line data={chartData} />
-    case "pie":
-      return (
-      <div style={{ maxWidth: "800px", maxHeight: "800px" }}> 
-        <Pie data={chartData} options={options} />
-      </div>
-      )
-    default:
-      return <Bar data={chartData} options={options} />;
-  }
-  return undefined
-  
+  return (
+    <div>
+      <select value={graphType} onChange={(e) => setGraphType(e.target.value)}>
+        {graphTypes.map((type) => (
+          <option key={type} value={type}>
+            {type.charAt(0).toUpperCase() + type.slice(1)}
+          </option>
+        ))}
+      </select>
+
+      {graphType === "bar" && <Bar data={chartData} options={options} />}
+      {graphType === "line" && <Line data={chartData} options={options} />}
+      {graphType === "pie" && (
+        <div style={{ maxWidth: "800px", maxHeight: "800px" }}>
+          <Pie data={chartData} options={options} />
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default ChartComponent;

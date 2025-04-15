@@ -41,11 +41,23 @@ def get_airtable_table_data(tableName):
 def get_topics_map():
     try:
         airtableData = get_airtable_table_data(tableNames["topics"])
-        topicMap = {topic['id']: f"{topic['fields']['Topic Name']} ({topic['fields']['Section'][0]})" for topic in airtableData}
+        topicMap = {}
+
+        for topic in airtableData:
+            if 'id' in topic and 'fields' in topic:
+                topicName = topic['fields'].get('Topic Name', None)
+                section = topic['fields'].get('Section', [None])[0]
+
+                if topicName and section:
+                    topicMap[topic['id']] = f"{topicName} ({section})"
+                else:
+                    logger.warning(f"Missing 'Topic Name' or 'Section' in topic: {topic}")
+            else:
+                logger.warning(f"Topic structure is invalid: {topic}")
 
         return topicMap
     except Exception as e:
-        logger.error("error during get_topics_map:", e)
+        logger.error("Error during get_topics_map:", e)
 
 def get_tests_map():
     try:
@@ -94,14 +106,18 @@ def get_reason_for_missing_frequencies(): #make the airtable get function global
         testMap = get_tests_map()
         testsDataMap = {}
         for review in airtableData:
-            review_test_id = testMap[review['fields']['Test'][0]]
+            review_test_id = testMap.get(review.get('fields').get('Test')[0])
+            if review_test_id == None:
+                pass
             if not review_test_id in testsDataMap:
                 testsDataMap[review_test_id] = {}
-            for reason in review['fields']['Reason For Missing']:
-                if reason in testsDataMap[review_test_id]:
-                    testsDataMap[review_test_id][reason] += 1
-                else:
-                    testsDataMap[review_test_id][reason] = 1
+            reasons = review.get('fields').get('Reason For Missing')
+            if reasons != None:
+                for reason in reasons:
+                    if reason in testsDataMap[review_test_id]:
+                        testsDataMap[review_test_id][reason] += 1
+                    else:
+                        testsDataMap[review_test_id][reason] = 1
 
         return testsDataMap
     except Exception as e:
@@ -115,15 +131,17 @@ def get_test_section_scores():
         testsDataMap = {}
         sections = ['Chem/Phys Score', 'CARS score', 'Bio/Bio chem Score', 'Psych/Soc Score']
         for test in airtableData:
-            testId = test['id']
+            testId = test.get('id')
+            if testId == None:
+                pass
             if not testId in testMap:
                 continue
             testDate = testMap[testId]
             if not testId or not testDate:
                 continue
-            scoreData = {section: test['fields'][section]
+            scoreData = {section: test.get('fields').get(section)
                          for section in sections
-                         if test['fields'].get(section)
+                         if test.get('fields').get(section)
                          }
             testsDataMap[testDate] = scoreData
 
@@ -133,38 +151,81 @@ def get_test_section_scores():
         logger.error("error occured with get_reason_for_missing_frequencies:", e)
         return None
 
-def get_topics_lacking_in_understanding_frequncies():
+def get_topics_lacking_in_understanding_frequencies():
     try:
         airtableData = get_airtable_table_data(tableNames["question reviews"])
-        print(airtableData)
         testMap = get_tests_map()
         topicsMap = get_topics_map()
         testsDataMap = {}
+
         for review in airtableData:
-            if all(reason not in review.get('fields').get('Reason For Missing') for reason in
-                   ("lacking topic understanding", "Content issue (Memorization)")):
+            if not review.get('fields') or not isinstance(review.get('fields'), dict):
+                continue  # Skip if 'fields' is missing or not a dictionary
+
+            # Skip if 'Reason For Missing' doesn't contain the relevant reasons
+            if not any(reason in review.get('fields').get('Reason For Missing', [])
+                       for reason in ("lacking topic understanding", "Content issue (Memorization)")):
                 continue
-            review_test_date = testMap[review['fields']['Test'][0]]
-            if not review_test_date in testsDataMap:
+
+            review_test_date = testMap.get(review.get('fields').get('Test', [None])[0])
+            if review_test_date is None:
+                continue  # Skip if the test date is missing
+
+            if review_test_date not in testsDataMap:
                 testsDataMap[review_test_date] = {}
 
             topics = review['fields'].get('Topic question relates to ', None)
-            if topics == None:
-                continue
+            if not topics or not isinstance(topics, list):
+                continue  # Skip if 'topics' is None or not a list
+
             for topic in topics:
-                topicName = topicsMap[topic]
-                if topicName == None:
-                    pass
-                if topicName in testsDataMap[review_test_date]:
-                    testsDataMap[review_test_date][topicName] += 1
-                else:
-                    testsDataMap[review_test_date][topicName] = 1
+                topicName = topicsMap.get(topic)
+                if not topicName:
+                    continue  # Skip if topic name is missing
+
+                testsDataMap[review_test_date][topicName] = (
+                    testsDataMap[review_test_date].get(topicName, 0) + 1
+                )
 
         return testsDataMap
 
     except Exception as e:
-        logger.error("error in get_topics_lacking_in_understanding_frequncies:", e)
+        logger.error(f"Error in get_topics_lacking_in_understanding_frequencies: {e}")
         return None
 
 if __name__ == "__main__":
-    print(get_topics_lacking_in_understanding_frequncies()) #rec2oz7d5mlc8BewW
+    #print(get_topics_lacking_in_understanding_frequncies()) #rec2oz7d5mlc8BewW
+    #print(get_topics_related_to_missed_questions())
+
+    # response_data = {}
+    # reason_data = get_reason_for_missing_frequencies()
+    # if reason_data:
+    #     response_data["Reason For Missing"] = {
+    #         "graphType": "Pie",
+    #         "data": reason_data
+    #     }
+    #
+    # topics_data = get_topics_related_to_missed_questions()
+    # if topics_data:
+    #     response_data["Frequency of Topics Relating To Missed Questions"] = {
+    #         "graphType": "Bar",
+    #         "data": topics_data
+    #     }
+    #
+    # section_data = get_test_section_scores()
+    # if section_data:
+    #     response_data["Section Scores"] = {
+    #         "graphType": "Bar",
+    #         "data": section_data
+    #     }
+    #
+    # topics_understanding_data = get_topics_lacking_in_understanding_frequencies()
+    # if topics_understanding_data:
+    #     response_data["Topics Lacking in Understanding"] = {
+    #         "graphType": "Pie",
+    #         "data": topics_understanding_data
+    #     }
+    #
+    # print(response_data)
+
+    print(get_topics_related_to_missed_questions())

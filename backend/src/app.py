@@ -1,10 +1,13 @@
 from flask import Flask, jsonify
 from flask_cors import CORS, cross_origin  # Import CORS
 from main import get_needs_review_ratios, get_reason_for_missing_frequencies
-from analyticFunctions import get_reason_for_missing_frequencies, get_topics_related_to_missed_questions, get_test_section_scores, get_topics_lacking_in_understanding_frequncies
-
+from analyticFunctions import get_reason_for_missing_frequencies, get_topics_related_to_missed_questions, get_test_section_scores, get_topics_lacking_in_understanding_frequencies
+from cachingFunctions import store_data_in_cache, get_cached_data
 app = Flask(__name__)
-CORS(app, origins="http://localhost:3000")
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000",
+                             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                             "allow_headers": ["Content-Type", "Authorization"]}})
+
 
 @app.route('/')
 def home():
@@ -19,6 +22,9 @@ def needs_review_ratios():
 @cross_origin(supports_credentials=True)
 def get_all_analytics():
     try:
+        cachedData = get_cached_data("get_all_analytics")
+        if cachedData:
+            return cachedData
         response_data = {}
         reason_data = get_reason_for_missing_frequencies()
         if reason_data:
@@ -41,13 +47,14 @@ def get_all_analytics():
                 "data": section_data
             }
 
-        topics_understanding_data = get_topics_lacking_in_understanding_frequncies()
+        topics_understanding_data = get_topics_lacking_in_understanding_frequencies()
         if topics_understanding_data:
             response_data["Topics Lacking in Understanding"] = {
                 "graphType": "Pie",
                 "data": topics_understanding_data
             }
 
+        store_data_in_cache("get_all_analytics", response_data)
         return jsonify(response_data)
 
     except Exception as e:
