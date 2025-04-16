@@ -1,36 +1,25 @@
+# MCAT Progress Tracker Full Stack
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+## Project Overview
 
-First, run the development server:
+- **Frontend**: Hosted on [Vercel](https://vercel.com) at [https://mcat-progress-tracker-full-stack.vercel.app/](https://mcat-progress-tracker-full-stack.vercel.app/).
+- **Backend**: Hosted on an EC2 Ubuntu instance called **mcat-deploy**, with the Public IPv4 address: `52.55.154.139`.
+- **HTTPS Backend**: Handled by [ngrok](https://ngrok.com), connected to your GitHub account. The backend is accessible at [https://7f3f-52-55-154-139.ngrok-free.app](https://7f3f-52-55-154-139.ngrok-free.app), mapping to `localhost:5000`.
+- **Backend in a tmux session**: Flask and ngrok run in a tmux session, which you can reenter with the command:
+  ```bash
+  tmux a
+```
+## Running the Backend
+
+To run Flask, navigate to the `/src` directory and run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+python3 app.py
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ensure that the app configuration has host="0.0.0.0" and the correct port. If ngrok is killed, simply restart it by running:
+```bash
+ngrok 5000
+```
