@@ -4,9 +4,12 @@ from main import get_needs_review_ratios, get_reason_for_missing_frequencies
 from analyticFunctions import get_reason_for_missing_frequencies, get_topics_related_to_missed_questions, get_test_section_scores, get_topics_lacking_in_understanding_frequencies
 from cachingFunctions import store_data_in_cache, get_cached_data
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000",
-                             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                             "allow_headers": ["Content-Type", "Authorization"]}})
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:3000",
+    "https://mcat-progress-tracker-full-stack.vercel.app"
+    ],
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization"]}})
 
 
 @app.route('/')
